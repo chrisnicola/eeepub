@@ -9,6 +9,8 @@ epub = EeePub.make do
   creator     'jugyo'
   publisher   'jugyo.org'
   date        '2010-05-06'
+  uid         'BookId'
+  identifier  'http://example.com/book/foo', :scheme => 'URL', :id => 'BookId'
 
   files [File.join(dir, 'foo.html'), File.join(dir, 'bar.html')]
   nav [
@@ -17,6 +19,8 @@ epub = EeePub.make do
     ]},
     {:label => '1. bar', :content => 'bar.html'}
   ]
+  cover_page File.join(dir, 'cover.jpg')
+  toc_page File.join(dir, 'toc.html')
 end
 epub.save('sample.epub')
 

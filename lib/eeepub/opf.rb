@@ -41,7 +41,7 @@ module EeePub
     def spine
       @spine ||
         complete_manifest.
-          select { |i| i[:media_type] == 'application/xhtml+xml' }.
+          select { |i| i[:media_type] == 'application/xhtml+xml' and i[:id] != 'toc' }.
           map { |i| i[:id]}
     end
 
@@ -83,6 +83,7 @@ module EeePub
             end
           end
         end
+        builder.meta :name => 'cover', :content => 'cover'
       end
     end
 
@@ -96,6 +97,12 @@ module EeePub
 
     def build_spine(builder)
       builder.spine :toc => toc do
+        if cover_page
+          builder.itemref :idref => 'cover', :linear => 'no'
+        end
+        if toc_page
+          builder.itemref :idref => 'toc'
+        end
         spine.each do |i|
           builder.itemref :idref => i
         end
@@ -103,11 +110,20 @@ module EeePub
     end
 
     def build_guide(builder)
-      return if guide.nil? || guide.empty?
+      return if (guide.nil? || guide.empty?) && !cover_page && !toc_page
 
       builder.guide do
-        guide.each do |i|
-          builder.reference convert_to_xml_attributes(i)
+        if toc_page
+          builder.reference :type => 'toc', :title => 'Table of Contents', :href => toc_page[:href]
+        end
+        if cover_page
+          builder.reference :type => 'cover', :title => 'Cover', :href => cover_page[:href]
+        end
+        builder.reference :type => 'text', :title => 'Welcome', :href => complete_manifest.first
+        if guide
+          guide.each do |i|
+            builder.reference convert_to_xml_attributes(i)
+          end
         end
       end
     end
@@ -143,6 +159,14 @@ module EeePub
       end
       id_cache[basename] += 1
       name
+    end
+
+    def cover_page
+      complete_manifest.find{ |i| i[:id] == 'cover' }
+    end
+
+    def toc_page
+      complete_manifest.find{ |i| i[:id] == 'toc' }
     end
   end
 end

@@ -19,6 +19,8 @@ module EeePub
   #     date        '2010-05-06'
   #     uid         'BookId'
   #     identifier  'http://example.com/book/foo', :scheme => 'URL', :id => 'BookId'
+  #     toc_page    '/path/to/toc.html', :title => 'Contents'
+  #     cover_page  '/path/to/cover.jpg', :title => 'Cover Image'
   #
   #     files ['/path/to/foo.html', '/path/to/bar.html']
   #     nav [
@@ -39,7 +41,7 @@ module EeePub
       :subject,
       :description,
       :rights,
-      :relation
+      :relation,
     ].each do |name|
       class_eval <<-DELIM
         def #{name}(value)
@@ -54,7 +56,9 @@ module EeePub
       :files,
       :nav,
       :ncx_file,
-      :opf_file
+      :opf_file,
+      :toc_page,
+      :cover_page,
     ].each do |name|
       define_method(name) do |arg|
         instance_variable_set("@#{name}", arg)
@@ -86,7 +90,7 @@ module EeePub
     # instead of saving to file, output the file contents. 
     # important for serving on-the-fly doc creation from
     # web interface where we don't want to allow file system
-    # writes (Heroku, et al.)
+    # writes (Heroku, et al})
     def render
       create_epub.render
     end
@@ -95,12 +99,19 @@ module EeePub
 
     def create_epub
       @uid ||= 'BookId'
+      @identifiers ||= []
       unique_identifier = @identifiers.select{ |i| i[:id] == @uid }.first
       unless unique_identifier
         unique_identifier = @identifiers.first
         unique_identifier[:id] = @uid
       end
       dir = Dir.mktmpdir
+      if @cover_page 
+        @files.push({ @cover_page => '', :id => 'cover'})
+      end
+      if @toc_page
+        @files.push({ @toc_page => '', :id => 'toc'})
+      end
       @files.each do |file|
         case file
         when String
@@ -131,13 +142,18 @@ module EeePub
         :description => @descriptions,
         :rights => @rightss,
         :relation => @relations,
+        :guide => @guide,
         :manifest => @files.map{|file|
           case file
           when String
             File.basename(file)
           when Hash
             file_path, dir_path = *file.first
-            File.join(dir_path, File.basename(file_path))
+            {
+              :href => File.join(dir_path, File.basename(file_path)).gsub(/^\//,''),
+              :id => file[:id],
+              :media_type => file[:media_type]
+            }
           end
         },
         :ncx => @ncx_file

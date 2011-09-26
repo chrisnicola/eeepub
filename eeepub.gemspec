@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "eeepub"
-  s.version     = "0.8.4"
+  s.version     = "0.8.6"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["jugyo"]
   s.email       = ["jugyo.org@gmail.com"]

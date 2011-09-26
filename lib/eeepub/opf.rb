@@ -119,7 +119,7 @@ module EeePub
         if cover_page
           builder.reference :type => 'cover', :title => 'Cover', :href => cover_page[:href]
         end
-        builder.reference :type => 'text', :title => 'Welcome', :href => complete_manifest.first
+        builder.reference :type => 'text', :title => 'Welcome', :href => complete_manifest.first[:href]
         if guide
           guide.each do |i|
             builder.reference convert_to_xml_attributes(i)
